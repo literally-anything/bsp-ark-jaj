@@ -21,7 +21,7 @@
 #   scripts/build-carrier-bsp.sh --drift    fail if the feed's newest snapshot
 #                                           ships a different flash BSP than the pin
 #
-# Needs: dtc, fdtoverlay, fdtget, a C preprocessor (cc), bsdtar, curl, perl,
+# Needs: dtc, fdtoverlay, fdtget, a C preprocessor (cc or cpp), bsdtar, curl, perl,
 # sha256sum or shasum. On Debian/Ubuntu: device-tree-compiler cpp
 # libarchive-tools curl. On macOS: brew install dtc.
 set -euo pipefail
@@ -50,9 +50,17 @@ for tool in curl perl gzip; do
 	command -v "$tool" >/dev/null || die "$tool not found"
 done
 if [ "$MODE" != drift ]; then
-	for tool in dtc fdtoverlay fdtget bsdtar "${CC:-cc}"; do
+	for tool in dtc fdtoverlay fdtget bsdtar; do
 		command -v "$tool" >/dev/null || die "$tool not found"
 	done
+	# C preprocessor: $CC -E if there's a compiler, else a bare cpp.
+	if command -v "${CC:-cc}" >/dev/null; then
+		PP=("${CC:-cc}" -E)
+	elif command -v cpp >/dev/null; then
+		PP=(cpp)
+	else
+		die "no C preprocessor (cc or cpp) found"
+	fi
 fi
 if command -v sha256sum >/dev/null; then
 	sha256() { sha256sum "$1" | cut -d' ' -f1; }
@@ -150,7 +158,7 @@ for key in CHECK_BOARDID BPFDTB_FILE CHIP_SKU WB0SDRAM_BCT; do flashvar "$key" >
 for key in DTBFILE EMMC_BCTS; do envvar "$key"; done
 
 cpp_dts() {
-	"${CC:-cc}" -E -P -nostdinc -undef -D__DTS__ -x assembler-with-cpp \
+	"${PP[@]}" -P -nostdinc -undef -D__DTS__ -x assembler-with-cpp \
 		-I "$ROOT/src/include" -I "$ROOT/src/ark" -I "$(dirname "$1")" "$1" -o "$2"
 }
 
@@ -202,16 +210,29 @@ build_dtb() {
 	[ -n "$model" ] || die "src/ark/dtb_models.env has no model for SKU $sku"
 
 	# Decompile, and drop __symbols__ so dtc -@ regenerates it with ARK's new
-	# labels (uartb) included. The decompiled source keeps every other label.
+	# labels (uartb) included. Only some dtc versions turn __symbols__ back
+	# into labels when decompiling, so re-attach every label explicitly
+	# (`label: &{/path} {};`); a label the decompiler already restored on the
+	# same node is harmless.
 	dtc -q -I dtb -O dts -o "$d/stock.dts" "$base"
 	awk '/^\t__symbols__ \{$/ {skip = 1} skip && /^\t\};$/ {skip = 0; next} !skip' "$d/stock.dts" >"$d/base.dts"
-	grep -q __symbols__ "$d/base.dts" && die "could not strip __symbols__ from $base"
+	if grep -q __symbols__ "$d/base.dts"; then
+		die "could not strip __symbols__ from $base"
+	fi
+	awk '/^\t__symbols__ \{$/ {in_syms = 1; next}
+		in_syms && /^\t\};$/ {exit}
+		in_syms { if (match($0, /^\t\t[A-Za-z_][A-Za-z0-9_]* = "\/[^"]*";$/)) {
+				sub(/^\t\t/, ""); sub(/;$/, ""); split($0, kv, " = ");
+				gsub(/"/, "", kv[2]); printf "%s: &{%s} {};\n", kv[1], kv[2]; n++ } }
+		END { if (!n) exit 1 }' "$d/stock.dts" >"$d/labels.dtsi" \
+		|| die "no __symbols__ in $base"
 	cat >"$d/jaj.dts" <<-EOF
 		#include <dt-bindings/clock/tegra234-clock.h>
 		#include <dt-bindings/reset/tegra234-reset.h>
 		#include <dt-bindings/gpio/tegra234-gpio.h>
 		#include <dt-bindings/interrupt-controller/arm-gic.h>
 		#include "base.dts"
+		#include "labels.dtsi"
 		#include "ark-JAJ-overrides.dtsi"
 		/ { model = "$model Super"; };
 	EOF
