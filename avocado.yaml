@@ -1,0 +1,259 @@
+# Board support for the ARK Electronics Just A Jetson (JAJ) carrier with an
+# NVIDIA Jetson Orin NX module, as carrier extensions on Avocado's generic
+# jetson-orin-nx target.
+#
+# One extension per module, because the flash settings are fixed per SOM SKU
+# (DTB, BPMP DTB, SDRAM, EEPROM SKU check). Pick the one matching the module
+# in your JAJ; flashing the other one fails the tegraflash SKU check.
+#
+#   avocado-bsp-ark-jaj-nx16   Orin NX 16GB (P3767-0000)
+#   avocado-bsp-ark-jaj-nx8    Orin NX 8GB  (P3767-0001)
+#
+# Use it in place of avocado-bsp-jetson-orin-nx, not alongside it.
+#
+# Both variants share everything below through YAML anchors (&name / *name).
+# The CLI's YAML parser resolves aliases but not `<<:` merge keys, so each
+# shared value is aliased whole.
+
+default_target: jetson-orin-nx
+supported_targets:
+  - jetson-orin-nx
+
+distro:
+  release: 2024
+  channel: edge
+
+extensions:
+  avocado-bsp-ark-jaj-nx16:
+    version: &version 0.1.0
+    release: &release r0
+    summary: Board support for the ARK Just A Jetson with a Jetson Orin NX 16GB
+    description: &description |
+      Carrier extension for the ARK Electronics Just A Jetson (JAJ) on the
+      jetson-orin-nx target. Replaces avocado-bsp-jetson-orin-nx: it carries
+      the same Orin NX module set, plus the JAJ's carrier support.
+
+      Flash time (stone/<extension>/carrier-bsp/, see README.md):
+        * kernel DTB = Avocado's stock DTB for the SKU + ARK's JAJ fragment
+          (USB-C gadget on usb3-0, third USB-A lane, UART-B, UART-A without
+          DMA, HD audio, HDMI, active-low hotplug, FFC PCIe capped at Gen2)
+          + ARK's dual IMX219 camera overlay
+        * ARK's MB1 pinmux/GPIO (IMU on spi3, UART-A flow control, ...)
+        * MB2 misc with the carrier EEPROM read disabled
+        * ARK's UEFI boot order (NVMe first, new devices at the bottom)
+        * EEPROM SKU check pinned to this variant's module
+
+      On the device: NX module drivers and L4T userspace, CAN (mttcan), CSI
+      cameras (IMX219), Intel AX2xx WiFi/Bluetooth, and the nvpmodel power
+      tables for this module.
+    license: &license GPL-2.0-only
+    url: &url https://github.com/literally-anything/bsp-ark-jaj
+    vendor: &vendor Hunter Baker
+
+    types: &types
+      - sysext
+      - confext
+
+    # Flash files for this variant. avocado-cli resolves this against the
+    # fetched extension (/opt/_avocado/<target>/includes/<name>/), and the
+    # directory is named after the extension so a consumer can find the slot
+    # of the extension it actually lists.
+    stone_include_paths:
+      - stone/avocado-bsp-ark-jaj-nx16
+
+    # Folded into the build hash when this repo is built directly (CI).
+    package_files: &package_files
+      - avocado.yaml
+      - upstream.env
+      - scripts
+      - src
+      - stone
+
+    modprobe: &modprobe
+      - nvme
+
+    on_merge: &on_merge
+      - udevadm control --reload
+      - udevadm trigger --type=subsystems --action=add --settle
+      - udevadm trigger --type=devices --action=add --settle
+      - nvbootctrl verify
+
+    packages: &packages
+      # --- Orin NX module: same set as avocado-bsp-jetson-orin-nx 0.1.0 ------
+      kernel-module-at24: '*'
+      kernel-module-cec: '*'
+      kernel-module-crct10dif-ce: '*'
+      kernel-module-drm-dp-aux-bus: '*'
+      kernel-module-fusb301: '*'
+      kernel-module-ghash-ce: '*'
+      kernel-module-governor-pod-scaling: '*'
+      kernel-module-governor-userspace: '*'
+      kernel-module-gpio-keys: '*'
+      nv-kernel-module-host1x: '*'
+      kernel-module-host1x-fence: '*'
+      kernel-module-host1x-nvhost: '*'
+      kernel-module-ina3221: '*'
+      kernel-module-mc-hwpm: '*'
+      kernel-module-mc-utils: '*'
+      kernel-module-nvgpu: '*'
+      kernel-module-nvhost-nvdla: '*'
+      kernel-module-nvhost-pva: '*'
+      kernel-module-nvhwpm: '*'
+      kernel-module-nvidia: '*'
+      kernel-module-nvidia-drm: '*'
+      kernel-module-nvidia-modeset: '*'
+      kernel-module-nvidia-vrs-pseq: '*'
+      kernel-module-nvmap: '*'
+      kernel-module-nvme: '*'
+      kernel-module-nvme-core: '*'
+      kernel-module-nvpmodel-clk-cap: '*'
+      kernel-module-nvsciipc: '*'
+      kernel-module-nvvrs-pseq-rtc: '*'
+      kernel-module-pcie-tegra194: '*'
+      kernel-module-phy-tegra194-p2u: '*'
+      kernel-module-pwm-fan: '*'
+      kernel-module-pwm-tegra: '*'
+      kernel-module-pwm-tegra-tachometer: '*'
+      kernel-module-r8169: '*'
+      kernel-module-realtek: '*'
+      kernel-module-sch-fq-codel: '*'
+      kernel-module-sha1-ce: '*'
+      kernel-module-sha2-ce: '*'
+      kernel-module-sha256-arm64: '*'
+      kernel-module-snd-hda-codec: '*'
+      kernel-module-snd-hda-codec-hdmi: '*'
+      kernel-module-snd-hda-core: '*'
+      kernel-module-snd-hda-tegra: '*'
+      kernel-module-snd-soc-audio-graph-card: '*'
+      kernel-module-snd-soc-simple-card-utils: '*'
+      kernel-module-snd-soc-tegra-audio-graph-card: '*'
+      kernel-module-snd-soc-tegra-pcm: '*'
+      kernel-module-snd-soc-tegra-utils: '*'
+      kernel-module-snd-soc-tegra186-arad: '*'
+      nv-kernel-module-snd-soc-tegra186-asrc: '*'
+      nv-kernel-module-snd-soc-tegra186-dspk: '*'
+      nv-kernel-module-snd-soc-tegra210-admaif: '*'
+      nv-kernel-module-snd-soc-tegra210-adx: '*'
+      nv-kernel-module-snd-soc-tegra210-ahub: '*'
+      nv-kernel-module-snd-soc-tegra210-amx: '*'
+      nv-kernel-module-snd-soc-tegra210-dmic: '*'
+      nv-kernel-module-snd-soc-tegra210-i2s: '*'
+      nv-kernel-module-snd-soc-tegra210-mixer: '*'
+      nv-kernel-module-snd-soc-tegra210-mvc: '*'
+      nv-kernel-module-snd-soc-tegra210-ope: '*'
+      nv-kernel-module-snd-soc-tegra210-sfc: '*'
+      kernel-module-spi-tegra114: '*'
+      kernel-module-spidev: '*'
+      kernel-module-tegra-aconnect: '*'
+      kernel-module-tegra-bpmp-thermal: '*'
+      kernel-module-tegra-cactmon-mc-all: '*'
+      kernel-module-tegra-dce: '*'
+      nv-kernel-module-tegra-drm: '*'
+      kernel-module-tegra-wmark: '*'
+      kernel-module-tegra-xudc: '*'
+      kernel-module-tegra210-adma: '*'
+      kernel-module-tegra234-aon: '*'
+      kernel-module-tegra234-oc-event: '*'
+      kernel-module-thermal-trip-event: '*'
+      kernel-module-tsecriscv: '*'
+      libgpiod-tools: '*'
+      swupdate: '*'
+      tegra-redundant-boot-base: '*'
+
+      # L4T GPU userspace + boot-time daemons. tegra-firmware-tegra234 is in
+      # the rootfs, not here: the firmware loader can't read it through the
+      # sysext /usr overlay.
+      cuda-cudart: '*'
+      tegra-configs-udev: '*'
+      tegra-libraries-cuda: '*'
+      tegra-nvphs: '*'
+      tegra-nvpower: '*'
+      tegra-nvsciipc: '*'
+      tegra-nvstartup: '*'
+
+      # --- JAJ carrier ----------------------------------------------------
+      # Gigabit Ethernet firmware for the r8169 above (the Orin Nano devkit
+      # BSP carries it; the generic NX one doesn't).
+      linux-firmware-rtl8168: '*'
+
+      # CAN port (onboard transceiver) on the SoC's MTTCAN controller.
+      kernel-module-can-dev: '*'
+      kernel-module-mttcan: '*'
+
+      # CSI cameras: NVIDIA capture stack (same set as the Orin Nano devkit
+      # BSP) + the IMX219 sensor driver for ARK's default dual camera overlay.
+      kernel-module-capture-ivc: '*'
+      kernel-module-hsp-mailbox-client: '*'
+      kernel-module-ivc-bus: '*'
+      kernel-module-ivc-ext: '*'
+      kernel-module-mc: '*'
+      kernel-module-nvhost-capture: '*'
+      kernel-module-nvhost-isp5: '*'
+      kernel-module-nvhost-nvcsi: '*'
+      kernel-module-nvhost-vi5: '*'
+      kernel-module-tegra-camera: '*'
+      kernel-module-tegra-camera-platform: '*'
+      kernel-module-tegra-camera-rtcpu: '*'
+      kernel-module-v4l2-async: '*'
+      kernel-module-v4l2-dv-timings: '*'
+      kernel-module-v4l2-fwnode: '*'
+      kernel-module-videobuf2-common: '*'
+      kernel-module-videobuf2-dma-contig: '*'
+      kernel-module-videobuf2-memops: '*'
+      kernel-module-videobuf2-v4l2: '*'
+      kernel-module-videodev: '*'
+      nv-kernel-module-nv-imx219: '*'
+
+      # M.2 Key E: Intel AX200/AX210 WiFi + Bluetooth.
+      kernel-module-cfg80211: '*'
+      kernel-module-mac80211: '*'
+      kernel-module-libarc4: '*'
+      kernel-module-iwlwifi: '*'
+      kernel-module-iwlmvm: '*'
+      kernel-module-btusb: '*'
+      kernel-module-btintel: '*'
+      linux-firmware-iwlwifi-misc: '*'
+      linux-firmware-ibt-20: '*'
+      linux-firmware-ibt-misc: '*'
+      wireless-regdb-static: '*'
+
+      # nvpmodel power table for this variant's module, as /etc/nvpmodel.conf.
+      ark-jaj-nvpmodel:
+        compile: ark-jaj-nvpmodel
+        install: scripts/install-nvpmodel.sh
+
+    # 6.6 (linux-yocto, the default kernel) ships drm-display-helper as a
+    # separate module, and the camera stack also needs the T194 NVCSI helper,
+    # as on the Orin Nano devkit BSP.
+    kernel-6.6.*: &kernel_6_6
+      packages:
+        kernel-module-drm-display-helper: '*'
+        kernel-module-nvhost-nvcsi-t194: '*'
+
+  avocado-bsp-ark-jaj-nx8:
+    version: *version
+    release: *release
+    summary: Board support for the ARK Just A Jetson with a Jetson Orin NX 8GB
+    description: *description
+    license: *license
+    url: *url
+    vendor: *vendor
+    types: *types
+    stone_include_paths:
+      - stone/avocado-bsp-ark-jaj-nx8
+    package_files: *package_files
+    modprobe: *modprobe
+    on_merge: *on_merge
+    packages: *packages
+    kernel-6.6.*: *kernel_6_6
+
+sdk:
+  image: docker.io/avocadolinux/sdk:{{ avocado.distro.release }}-{{ avocado.distro.channel }}
+  # Only used when building this repo directly (CI). fetch-nvpmodel.sh needs
+  # curl and zstd from the SDK, which the toolchain provides; a consuming
+  # project needs the same in its own sdk.packages (the default one has it).
+  packages:
+    avocado-sdk-toolchain: '*'
+  compile:
+    ark-jaj-nvpmodel:
+      compile: scripts/fetch-nvpmodel.sh

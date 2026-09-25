@@ -1,0 +1,7 @@
+# scripts/build-carrier-bsp.sh download cache and scratch
+/build/
+
+# Avocado CLI state when building this repo directly
+.avocado/
+.avocado-state
+.avocado-desktop.json

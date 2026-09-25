@@ -1,0 +1,75 @@
+name: CI
+
+# - carrier-bsp: stone/ must be exactly what upstream.env produces.
+# - build: both variants install and build against the Avocado feed, the same
+#   way avocado-linux/actions' extension-test.yml does (that workflow builds
+#   only the first extension in a repo, so it can't cover both here).
+# - drift (weekly): fail if the feed's newest jetson-orin-nx snapshot ships a
+#   different flash BSP than the one the DTBs were generated from.
+#
+# No publish job: publishing to the Avocado feed needs an Avocado Connect org
+# that trusts this repo. Consumers pin a release tag with a git source.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    tags: ['[0-9]+.[0-9]+.[0-9]+', '[0-9]+.[0-9]+.[0-9]+-*']
+  schedule:
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  carrier-bsp:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: sudo apt-get update && sudo apt-get install -y device-tree-compiler cpp libarchive-tools
+      - name: Regenerate and compare
+        run: scripts/build-carrier-bsp.sh --check
+
+  tag-matches-version:
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Tag must equal the extensions' version
+        run: |
+          version=$(python3 -c "import yaml; e=yaml.safe_load(open('avocado.yaml'))['extensions']; v={x['version'] for x in e.values()}; assert len(v)==1, v; print(v.pop())")
+          [ "$version" = "$GITHUB_REF_NAME" ] || { echo "::error::tag $GITHUB_REF_NAME != avocado.yaml version $version"; exit 1; }
+
+  build:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ext: [avocado-bsp-ark-jaj-nx16, avocado-bsp-ark-jaj-nx8]
+    env:
+      AVOCADO_DISTRO_RELEASE: '2024'
+      AVOCADO_DISTRO_CHANNEL: edge
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install avocado CLI
+        uses: avocado-linux/actions/setup-avocado-cli@v1
+        with:
+          version: latest
+      - name: avocado sdk install
+        run: avocado sdk install -f --no-tui --target jetson-orin-nx
+      - name: avocado ext install
+        run: avocado ext install -f --no-tui ${{ matrix.ext }} --target jetson-orin-nx
+      - name: avocado ext build
+        run: avocado ext build --no-tui ${{ matrix.ext }} --target jetson-orin-nx
+
+  drift:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Newest snapshot still ships the pinned flash BSP
+        run: scripts/build-carrier-bsp.sh --drift

@@ -1,0 +1,194 @@
+{
+  "distro_release": "2024",
+  "targets": {
+    "jetson-orin-nx": {
+      "extensions": {
+        "avocado-bsp-ark-jaj-nx16": {
+          "packages": {
+            "cuda-cudart": {
+              "repo": "jetson-orin-nx-target",
+              "version": "12.6.68+1-r0.0.armv8a_tegra"
+            },
+            "libgpiod-tools": {
+              "repo": "jetson-orin-nx-target",
+              "version": "2.1.3-r0.0.armv8a"
+            },
+            "linux-firmware-ibt-20": {
+              "repo": "jetson-orin-nx-target",
+              "version": "20240909-r0.2.noarch"
+            },
+            "linux-firmware-ibt-misc": {
+              "repo": "jetson-orin-nx-target",
+              "version": "20240909-r0.2.noarch"
+            },
+            "linux-firmware-iwlwifi-misc": {
+              "repo": "jetson-orin-nx-target",
+              "version": "20240909-r0.2.noarch"
+            },
+            "linux-firmware-rtl8168": {
+              "repo": "jetson-orin-nx-target",
+              "version": "20240909-r0.2.noarch"
+            },
+            "swupdate": {
+              "repo": "jetson-orin-nx-target",
+              "version": "2025.12-r0.1.armv8a"
+            },
+            "tegra-configs-udev": {
+              "repo": "jetson-orin-nx-target",
+              "version": "36.5.0+20260115194252-r0.3.armv8a_tegra"
+            },
+            "tegra-libraries-cuda": {
+              "repo": "jetson-orin-nx-target",
+              "version": "36.5.0+20260115194252-r0.0.armv8a_tegra"
+            },
+            "tegra-nvphs": {
+              "repo": "jetson-orin-nx-target",
+              "version": "36.5.0-r0.0.armv8a"
+            },
+            "tegra-nvpower": {
+              "repo": "jetson-orin-nx-target",
+              "version": "36.5.0+20260115194252-r0.0.avocado_jetson_orin_nx"
+            },
+            "tegra-nvsciipc": {
+              "repo": "jetson-orin-nx-target",
+              "version": "36.5.0-r0.0.armv8a"
+            },
+            "tegra-nvstartup": {
+              "repo": "jetson-orin-nx-target",
+              "version": "36.5.0-r0.0.armv8a"
+            },
+            "tegra-redundant-boot-base": {
+              "repo": "jetson-orin-nx-target",
+              "version": "36.5.0+20260115194252-r0.0.armv8a_tegra"
+            },
+            "wireless-regdb-static": {
+              "repo": "jetson-orin-nx-target",
+              "version": "2026.02.04-r0.0.noarch"
+            }
+          }
+        },
+        "avocado-bsp-ark-jaj-nx8": {
+          "packages": {
+            "cuda-cudart": {
+              "repo": "jetson-orin-nx-target",
+              "version": "12.6.68+1-r0.0.armv8a_tegra"
+            },
+            "libgpiod-tools": {
+              "repo": "jetson-orin-nx-target",
+              "version": "2.1.3-r0.0.armv8a"
+            },
+            "linux-firmware-ibt-20": {
+              "repo": "jetson-orin-nx-target",
+              "version": "20240909-r0.2.noarch"
+            },
+            "linux-firmware-ibt-misc": {
+              "repo": "jetson-orin-nx-target",
+              "version": "20240909-r0.2.noarch"
+            },
+            "linux-firmware-iwlwifi-misc": {
+              "repo": "jetson-orin-nx-target",
+              "version": "20240909-r0.2.noarch"
+            },
+            "linux-firmware-rtl8168": {
+              "repo": "jetson-orin-nx-target",
+              "version": "20240909-r0.2.noarch"
+            },
+            "swupdate": {
+              "repo": "jetson-orin-nx-target",
+              "version": "2025.12-r0.1.armv8a"
+            },
+            "tegra-configs-udev": {
+              "repo": "jetson-orin-nx-target",
+              "version": "36.5.0+20260115194252-r0.3.armv8a_tegra"
+            },
+            "tegra-libraries-cuda": {
+              "repo": "jetson-orin-nx-target",
+              "version": "36.5.0+20260115194252-r0.0.armv8a_tegra"
+            },
+            "tegra-nvphs": {
+              "repo": "jetson-orin-nx-target",
+              "version": "36.5.0-r0.0.armv8a"
+            },
+            "tegra-nvpower": {
+              "repo": "jetson-orin-nx-target",
+              "version": "36.5.0+20260115194252-r0.0.avocado_jetson_orin_nx"
+            },
+            "tegra-nvsciipc": {
+              "repo": "jetson-orin-nx-target",
+              "version": "36.5.0-r0.0.armv8a"
+            },
+            "tegra-nvstartup": {
+              "repo": "jetson-orin-nx-target",
+              "version": "36.5.0-r0.0.armv8a"
+            },
+            "tegra-redundant-boot-base": {
+              "repo": "jetson-orin-nx-target",
+              "version": "36.5.0+20260115194252-r0.0.armv8a_tegra"
+            },
+            "wireless-regdb-static": {
+              "repo": "jetson-orin-nx-target",
+              "version": "2026.02.04-r0.0.noarch"
+            }
+          }
+        }
+      },
+      "initramfs": {
+        "avocado-pkg-initramfs": {
+          "repo": "jetson-orin-nx-target",
+          "version": "0.0.0-r0.0.avocado_jetson_orin_nx"
+        },
+        "packagegroup-avocado-initramfs-modules-6.6.127-yocto-standard": {
+          "repo": "jetson-orin-nx-target",
+          "version": "6.6.127+git0+45f69741c7_70af2998be-r0.5.avocado_jetson_orin_nx"
+        }
+      },
+      "kernel-versions": {
+        "extensions/avocado-bsp-ark-jaj-nx16": "6.6.127-yocto-standard",
+        "extensions/avocado-bsp-ark-jaj-nx8": "6.6.127-yocto-standard",
+        "initramfs": "6.6.127-yocto-standard",
+        "rootfs": "6.6.127-yocto-standard",
+        "target-sysroot": "6.6.127-yocto-standard"
+      },
+      "kernels": {
+        "6.6.127-yocto-standard": {
+          "kernel-image-6.6.127-yocto-standard": "6.6.127+git0+45f69741c7_70af2998be-r0.5.avocado_jetson_orin_nx"
+        }
+      },
+      "repo-snapshot": {
+        "channel": "edge",
+        "created": "2026-07-08T02:58:57Z",
+        "release": "2024",
+        "repo_url": "https://repo.avocadolinux.org",
+        "snapshot": "17"
+      },
+      "rootfs": {
+        "avocado-pkg-rootfs": {
+          "repo": "jetson-orin-nx-target",
+          "version": "0.0.0-r0.1.avocado_jetson_orin_nx"
+        },
+        "kernel-image-6.6.127-yocto-standard": {
+          "repo": "jetson-orin-nx-target",
+          "version": "6.6.127+git0+45f69741c7_70af2998be-r0.5.avocado_jetson_orin_nx"
+        },
+        "packagegroup-avocado-rootfs-modules-6.6.127-yocto-standard": {
+          "repo": "jetson-orin-nx-target",
+          "version": "6.6.127+git0+45f69741c7_70af2998be-r0.5.avocado_jetson_orin_nx"
+        }
+      },
+      "sdk": {
+        "aarch64": {
+          "avocado-sdk-bootstrap": "0.0.0-r0.0.aarch64_avocadosdk",
+          "avocado-sdk-jetson-orin-nx": "0.0.0-r0.0.all_avocadosdk",
+          "avocado-sdk-toolchain": "0.0.0-r0.14.aarch64_avocadosdk"
+        }
+      },
+      "target-sysroot": {
+        "avocado-sdk-target-sysroot": {
+          "repo": "jetson-orin-nx-target",
+          "version": "0.0.0-r0.1.avocado_jetson_orin_nx"
+        }
+      }
+    }
+  },
+  "version": 8
+}

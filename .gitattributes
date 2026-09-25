@@ -1,0 +1,8 @@
+# NVIDIA's pinmux spreadsheet emits these CRLF; tegraflash reads them as-is.
+# Never let git normalize their line endings.
+src/ark/tegra234-mb1-bct-*.dtsi -text
+stone/**/tegra234-mb1-bct-*.dtsi -text
+
+# Generated binaries
+*.dtb binary
+*.dtbo binary
