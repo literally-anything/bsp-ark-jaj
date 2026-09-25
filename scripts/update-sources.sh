@@ -3,9 +3,13 @@
 #   src/ark/      ARK's JAJ carrier files, byte-for-byte from ARK_COMMIT
 #   src/include/  dt-bindings headers from LINUX_TAG
 #
-# Files are copied unmodified (ARK's BCT dtsi stay CRLF). Anything JAJ-specific
-# that this repo changes happens in scripts/build-carrier-bsp.sh, never here, so
-# a re-vendor never silently drops a local edit.
+# Files are copied unmodified (ARK's BCT dtsi stay CRLF). Anything this repo
+# derives from them happens in scripts/build-carrier-bsp.sh, never here, so a
+# re-vendor never silently drops a local edit.
+#
+# One file is ported by hand rather than derived: overlays/jaj-carrier.dtso is
+# ARK's ark-JAJ-overrides.dtsi rewritten as an overlay. If this run changes
+# src/ark/ark-JAJ-overrides.dtsi, port the change there.
 #
 # Usage: scripts/update-sources.sh [path-to-ark_jetson_kernel-checkout]
 set -euo pipefail
@@ -44,7 +48,6 @@ ark_files=(
 	"tegra234-p3767-camera-p3768-imx219-dual.dts=products/JAJ/overlay/tegra234-p3767-camera-p3768-imx219-dual.dts"
 	"tegra234-camera-rbpcv2-imx219.dtsi=products/JAJ/overlay/tegra234-camera-rbpcv2-imx219.dtsi"
 	"ark_boot_order.dts=products/JAJ/overlay/ark_boot_order.dts"
-	"dtb_models.env=products/JAJ/dtb_models.env"
 )
 
 rm -rf src/ark
@@ -70,4 +73,7 @@ for h in "${linux_headers[@]}"; do
 done
 
 echo "update-sources: vendored ARK $ARK_COMMIT and Linux $LINUX_TAG headers"
-echo "update-sources: now run scripts/build-carrier-bsp.sh and review the diff"
+if ! git diff --quiet -- src/ark/ark-JAJ-overrides.dtsi; then
+	echo "update-sources: ARK's ark-JAJ-overrides.dtsi changed: port the change to overlays/jaj-carrier.dtso" >&2
+fi
+echo "update-sources: now run scripts/in-container.sh scripts/build-carrier-bsp.sh and review the diff"

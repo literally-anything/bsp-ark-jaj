@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Stand-in for NVIDIA's dt-bindings/tegra234-p3767-0000-common.h, which ARK's
- * camera overlay includes. That header isn't part of this repo's vendored
- * sources, and the overlay only uses this one macro from it.
+ * camera overlay includes (jaj-imx219-dual.dtso includes this file instead).
+ * That header isn't in kernel-devsrc, and the overlay only uses this one macro.
  *
  * The list is the `compatible` of the stock tegra234-p3767-camera-p3768-*.dtbo
  * in Avocado's jetson-orin-nx flash BSP: every Orin NX/Nano SKU on the P3768

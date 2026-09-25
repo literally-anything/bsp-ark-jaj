@@ -1,0 +1,42 @@
+// SPDX-License-Identifier: GPL-2.0-only
+/*
+ * Labels for the XUSB pad lanes, so jaj-carrier.dtso can point USB
+ * controllers at them. The stock device tree gives these lanes no labels, and
+ * an overlay can only reference base nodes by label (a path reference in a
+ * property value can't be fixed up). Labelling the node through target-path
+ * adds the label to the merged tree's __symbols__, where the next overlay in
+ * the list resolves it.
+ *
+ * Must come before jaj-carrier.dtso in the overlay list. The fragments are
+ * deliberately empty: nothing here changes a property.
+ */
+
+/dts-v1/;
+/plugin/;
+
+/ {
+	fragment@0 {
+		target-path = "/bus@0/padctl@3520000/pads/usb2/lanes/usb2-0";
+		jaj_usb2_0: __overlay__ { };
+	};
+	fragment@1 {
+		target-path = "/bus@0/padctl@3520000/pads/usb2/lanes/usb2-1";
+		jaj_usb2_1: __overlay__ { };
+	};
+	fragment@2 {
+		target-path = "/bus@0/padctl@3520000/pads/usb2/lanes/usb2-2";
+		jaj_usb2_2: __overlay__ { };
+	};
+	fragment@3 {
+		target-path = "/bus@0/padctl@3520000/pads/usb3/lanes/usb3-0";
+		jaj_usb3_0: __overlay__ { };
+	};
+	fragment@4 {
+		target-path = "/bus@0/padctl@3520000/pads/usb3/lanes/usb3-1";
+		jaj_usb3_1: __overlay__ { };
+	};
+	fragment@5 {
+		target-path = "/bus@0/padctl@3520000/pads/usb3/lanes/usb3-2";
+		jaj_usb3_2: __overlay__ { };
+	};
+};

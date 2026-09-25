@@ -1,19 +1,32 @@
 # Board support for the ARK Electronics Just A Jetson (JAJ) carrier with an
-# NVIDIA Jetson Orin NX module, as carrier extensions on Avocado's generic
-# jetson-orin-nx target.
+# NVIDIA Jetson Orin NX 16GB module (P3767-0000), as a carrier extension on
+# Avocado's generic jetson-orin-nx target. Use it in place of
+# avocado-bsp-jetson-orin-nx, not alongside it.
 #
-# One extension per module, because the flash settings are fixed per SOM SKU
-# (DTB, BPMP DTB, SDRAM, EEPROM SKU check). Pick the one matching the module
-# in your JAJ; flashing the other one fails the tegraflash SKU check.
+# 16GB only: that is the jetson-orin-nx target's default SKU, so the flash BSP's
+# BPMP, SDRAM and nvpmodel settings already match, and Avocado's device-tree
+# overlay hook (which merges into the target's default DTB) will fit without
+# changes. Other modules would need their own flash settings; see README.md.
+
+# The device-tree overlays that turn the stock DTB into the JAJ's, in apply
+# order, in exactly the shape of `extensions.<ext>.device_tree_overlays`.
 #
-#   avocado-bsp-ark-jaj-nx16   Orin NX 16GB (P3767-0000)
-#   avocado-bsp-ark-jaj-nx8    Orin NX 8GB  (P3767-0001)
+# Not declared on the extension yet: avocado-cli would then require
+# `avocado-dtc-overlay-deliver` and `nativesdk-avocado-dtc-overlay`, which no
+# Jetson feed publishes yet, and `sdk install` would fail. Until then
+# scripts/build-carrier-bsp.sh applies this same list, the same way the Tegra
+# hook does, and ships the result through carrier-bsp/. When the packages are
+# published, uncomment the `device_tree_overlays` line on the extension and
+# follow "Switching to device_tree_overlays" in README.md.
 #
-# Use it in place of avocado-bsp-jetson-orin-nx, not alongside it.
-#
-# Both variants share everything below through YAML anchors (&name / *name).
-# The CLI's YAML parser resolves aliases but not `<<:` merge keys, so each
-# shared value is aliased whole.
+# The CLI ignores this top-level key; it only exists so the list has one home.
+x-device-tree-overlays: &jaj_overlays
+  - name: jaj-lane-labels
+    src: overlays/jaj-lane-labels.dtso
+  - name: jaj-carrier
+    src: overlays/jaj-carrier.dtso
+  - name: jaj-imx219-dual
+    src: overlays/jaj-imx219-dual.dtso
 
 default_target: jetson-orin-nx
 supported_targets:
@@ -24,61 +37,61 @@ distro:
   channel: edge
 
 extensions:
-  avocado-bsp-ark-jaj-nx16:
-    version: &version 0.1.0
-    release: &release r0
+  avocado-bsp-ark-jaj:
+    version: 0.2.0
+    release: r0
     summary: Board support for the ARK Just A Jetson with a Jetson Orin NX 16GB
-    description: &description |
-      Carrier extension for the ARK Electronics Just A Jetson (JAJ) on the
-      jetson-orin-nx target. Replaces avocado-bsp-jetson-orin-nx: it carries
-      the same Orin NX module set, plus the JAJ's carrier support.
+    description: |
+      Carrier extension for the ARK Electronics Just A Jetson (JAJ) with an
+      Orin NX 16GB, on the jetson-orin-nx target. Replaces
+      avocado-bsp-jetson-orin-nx: it carries the same Orin NX module set, plus
+      the JAJ's carrier support.
 
-      Flash time (stone/<extension>/carrier-bsp/, see README.md):
-        * kernel DTB = Avocado's stock DTB for the SKU + ARK's JAJ fragment
-          (USB-C gadget on usb3-0, third USB-A lane, UART-B, UART-A without
-          DMA, HD audio, HDMI, active-low hotplug, FFC PCIe capped at Gen2)
-          + ARK's dual IMX219 camera overlay
+      Flash time (stone/carrier-bsp/, see README.md):
+        * kernel DTB = Avocado's stock DTB + this repo's device-tree overlays
+          (USB-C gadget on usb3-0, third USB-A lane, UART-B, UART-A in PIO, HD
+          audio, HDMI, active-low hotplug, FFC PCIe capped at Gen2, dual IMX219)
         * ARK's MB1 pinmux/GPIO (IMU on spi3, UART-A flow control, ...)
         * MB2 misc with the carrier EEPROM read disabled
         * ARK's UEFI boot order (NVMe first, new devices at the bottom)
-        * EEPROM SKU check pinned to this variant's module
+        * EEPROM SKU check pinned to the 16GB module
 
       On the device: NX module drivers and L4T userspace, CAN (mttcan), CSI
-      cameras (IMX219), Intel AX2xx WiFi/Bluetooth, and the nvpmodel power
-      tables for this module.
-    license: &license GPL-2.0-only
-    url: &url https://github.com/literally-anything/bsp-ark-jaj
-    vendor: &vendor Hunter Baker
+      cameras (IMX219), Intel AX2xx WiFi/Bluetooth, Ethernet firmware.
+    license: GPL-2.0-only
+    url: https://github.com/literally-anything/bsp-ark-jaj
+    vendor: Hunter Baker
 
-    types: &types
+    types:
       - sysext
       - confext
 
-    # Flash files for this variant. avocado-cli resolves this against the
-    # fetched extension (/opt/_avocado/<target>/includes/<name>/), and the
-    # directory is named after the extension so a consumer can find the slot
-    # of the extension it actually lists.
+    # Flash files. avocado-cli resolves this against the fetched extension
+    # (/opt/_avocado/<target>/includes/avocado-bsp-ark-jaj/).
     stone_include_paths:
-      - stone/avocado-bsp-ark-jaj-nx16
+      - stone
+
+    # device_tree_overlays: *jaj_overlays
 
     # Folded into the build hash when this repo is built directly (CI).
-    package_files: &package_files
+    package_files:
       - avocado.yaml
       - upstream.env
+      - overlays
       - scripts
       - src
       - stone
 
-    modprobe: &modprobe
+    modprobe:
       - nvme
 
-    on_merge: &on_merge
+    on_merge:
       - udevadm control --reload
       - udevadm trigger --type=subsystems --action=add --settle
       - udevadm trigger --type=devices --action=add --settle
       - nvbootctrl verify
 
-    packages: &packages
+    packages:
       # --- Orin NX module: same set as avocado-bsp-jetson-orin-nx 0.1.0 ------
       kernel-module-at24: '*'
       kernel-module-cec: '*'
@@ -181,7 +194,7 @@ extensions:
       kernel-module-mttcan: '*'
 
       # CSI cameras: NVIDIA capture stack (same set as the Orin Nano devkit
-      # BSP) + the IMX219 sensor driver for ARK's default dual camera overlay.
+      # BSP) + the IMX219 sensor driver for the dual camera overlay.
       kernel-module-capture-ivc: '*'
       kernel-module-hsp-mailbox-client: '*'
       kernel-module-ivc-bus: '*'
@@ -217,43 +230,13 @@ extensions:
       linux-firmware-ibt-misc: '*'
       wireless-regdb-static: '*'
 
-      # nvpmodel power table for this variant's module, as /etc/nvpmodel.conf.
-      ark-jaj-nvpmodel:
-        compile: ark-jaj-nvpmodel
-        install: scripts/install-nvpmodel.sh
-
     # 6.6 (linux-yocto, the default kernel) ships drm-display-helper as a
     # separate module, and the camera stack also needs the T194 NVCSI helper,
     # as on the Orin Nano devkit BSP.
-    kernel-6.6.*: &kernel_6_6
+    kernel-6.6.*:
       packages:
         kernel-module-drm-display-helper: '*'
         kernel-module-nvhost-nvcsi-t194: '*'
 
-  avocado-bsp-ark-jaj-nx8:
-    version: *version
-    release: *release
-    summary: Board support for the ARK Just A Jetson with a Jetson Orin NX 8GB
-    description: *description
-    license: *license
-    url: *url
-    vendor: *vendor
-    types: *types
-    stone_include_paths:
-      - stone/avocado-bsp-ark-jaj-nx8
-    package_files: *package_files
-    modprobe: *modprobe
-    on_merge: *on_merge
-    packages: *packages
-    kernel-6.6.*: *kernel_6_6
-
 sdk:
   image: docker.io/avocadolinux/sdk:{{ avocado.distro.release }}-{{ avocado.distro.channel }}
-  # Only used when building this repo directly (CI). fetch-nvpmodel.sh needs
-  # curl and zstd from the SDK, which the toolchain provides; a consuming
-  # project needs the same in its own sdk.packages (the default one has it).
-  packages:
-    avocado-sdk-toolchain: '*'
-  compile:
-    ark-jaj-nvpmodel:
-      compile: scripts/fetch-nvpmodel.sh
